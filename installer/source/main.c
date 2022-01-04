@@ -7,34 +7,21 @@
 
 #define	MNT_UPDATE	0x0000000000010000ULL /* not real mount, just update */
 
-#define USB_FORMAT "/mnt/usb%i/data/daemons/%s"
+#define DAEMON_DIRECTORY "/data/daemons/"
 #define DAEMON_TITLE_ID "DAMN00001"
+#define true 1 
+#define false 0
 
-int getUsbMountIndex() {
+bool isDaemonDirectoryFound() {
     char targetPath[128];
     memset(targetPath, 0, sizeof(targetPath));
-    int usbId = -1;
-    int failedCount = 0;
-    while (1) {
-        for(int i = 0; i < 8; i++) {
-            sprintf(targetPath,USB_FORMAT"/eboot.bin" , i, DAEMON_TITLE_ID);
-            int fd = open(targetPath, O_RDONLY, 0644);
-            close(fd);
-            if (fd > 0) {
-                usbId = i;
-                goto exit;
-            }
-        }
-        failedCount++;
-        if (failedCount >= 5) {
-            break;
-        }
-        sceKernelSleep(1);
+    sprintf(targetPath,DAEMON_DIRECTORY"%s/eboot.bin" , DAEMON_TITLE_ID);
+    int fd = open(targetPath, O_RDONLY, 0644);
+    if (fd < 0) {
+        return true;
     }
-
-exit:
-    return usbId;
-
+    close(fd);
+    return false;
 }
 
 
@@ -53,22 +40,23 @@ int _main() {
         } else {
             printf_notification("Successfully mounted /system for RW");
         }
-        int usbIndex = getUsbMountIndex();
-        if (usbIndex == -1) {
-            printf_notification("Fail to find usb.");
+
+        if (isDaemonDirectoryFound()) {
+            printf_notification("Fail to find daemon.");
             break;
         } else {
-            printf_notification("Found match at /mnt/usb%i/", usbIndex);
+            printf_notification("Found daemon.");
         }
+        
+        // Copy to target daemon directory
         char sourcePath[128];
         memset(sourcePath, 0, sizeof(sourcePath));
-        sprintf(sourcePath, USB_FORMAT, usbIndex, DAEMON_TITLE_ID);
+        sprintf(sourcePath, DAEMON_DIRECTORY"%s", DAEMON_TITLE_ID);
 
         mkdir("/system/vsh/app/"DAEMON_TITLE_ID"/", 0777);
         copy_dir(sourcePath, "/system/vsh/app/"DAEMON_TITLE_ID);
+        printf_notification("Successfully copied files.");
     } while (0);
-
-
 
     return 0;
 }

@@ -1,9 +1,9 @@
 LIBPS4	:= $(PS4SDK)/libPS4
 
-CC	:= gcc
+CC		:= gcc
 OBJCOPY	:= objcopy
 SDIR	:= source
-TDIR := release
+TDIR 	:= release
 ODIR	:= $(SDIR)/x64/Debug
 IDIRS	:= -I$(LIBPS4)/include -Iinclude
 LDIRS	:= -L$(LIBPS4)
